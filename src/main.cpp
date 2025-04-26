@@ -1,31 +1,54 @@
 #include "config.h"
-#include "triangle_mesh.h"
-#include "material.h"
+#include "cube.h"
+#include "camera.h"
 
 unsigned int make_shader(const std::string& vertex_filepath, const std::string& fragment_filepath);
 
 unsigned int make_module(const std::string& filepath, unsigned int module_type);
 
-int main() {
+GLFWwindow* set_up_glfw() {
 
 	GLFWwindow* window;
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	#ifdef __APPLE__
+		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	#endif
+
+	window = glfwCreateWindow(640, 480, "My Window", NULL, NULL);
+	glfwMakeContextCurrent(window);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+	return window;
+}
+
+void set_up_opengl(GLFWwindow* window) {
+    glClearColor(0.25f, 0.5f, 0.75f, 1.0f);
+
+	// set rendering region to actual screen size
+	int w, h;
+	glfwGetFramebufferSize(window, &w, &h);
+	glViewport(0, 0, w, h);
+
+	// enable depth testing
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
+
+	// enable back face culling
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+}
+
+int main() {
 
 	if (!glfwInit()) {
 		std::cout << "GLFW couldn't start" << std::endl;
 		return -1;
 	}
 
-	// Specify OpenGL version
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // 4.1
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1); // macOS typically supports up to 4.1
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Core profile
-	#ifdef __APPLE__ // macOS
-		glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Forward compatible
-	#endif
-
-	// Create window
-	window = glfwCreateWindow(640, 480, "My Window", NULL, NULL);
-	glfwMakeContextCurrent(window); // Make window current
+	GLFWwindow* window = set_up_glfw();
 
 	// Load OpenGL
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -34,76 +57,81 @@ int main() {
 		return -1;
 	}
 
-	glClearColor(0.25f, 0.5f, 0.75f, 1.0f);
+	set_up_opengl(window);
 
-	// Set viewport
-	int w,h;
-	glfwGetFramebufferSize(window, &w, &h);
-	glViewport(0, 0, w, h);
-
-	TriangleMesh* triangle = new TriangleMesh();
-	Material* material = new Material("../img/sketch_1.jpg");
-	Material* mask = new Material("../img/mask.jpg");
+	// make objects
+	Cube* cube = new Cube({3.0f, 0.0f, 0.25f}, {0.25f, 0.25f, 0.25f});
+	Camera* player = new Camera({0.0f, 0.0f, 1.0f});
 
 	unsigned int shader = make_shader(
 		"../src/shaders/vertex.glsl", 
 		"../src/shaders/fragment.glsl"
 	);
 
-	// set texture units
+	// configure shader
 	glUseProgram(shader);
-	glUniform1i(glGetUniformLocation(shader, "material"), 0);
-	glUniform1i(glGetUniformLocation(shader, "mask"), 1);
-
-	glm::vec3 quad_pos = {0.1f, -0.2f, 0.0f};
-
-	// fetch uniform locations
-	unsigned int model_location = glGetUniformLocation(shader, "model");
 	unsigned int view_location = glGetUniformLocation(shader, "view");
 	unsigned int proj_location = glGetUniformLocation(shader, "projection");
-
-	glm::vec3 camera_pos = {-5.0f, 0.0f, 3.0f};
-	glm::vec3 camera_target = {0.0f, 0.0f, 0.0f};
-	glm::vec3 up = {0.0f, 0.0f, 1.0f};
-
-	glm::mat4 view = glm::lookAt(camera_pos, camera_target, up);
-	glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
-
 	glm::mat4 projection = glm::perspective(
 		45.0f, 640.0f / 480.0f, 0.1f, 10.0f
 	);
 	glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(projection));
 
-	// configure alpha blending
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	while (!glfwWindowShouldClose(window)) {
+
+		// keys
+				glm::vec3 dPos = {0.0f, 0.0f, 0.0f};
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			dPos.x += 1.0f;
+		}
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			dPos.y -= 1.0f;
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			dPos.x -= 1.0f;
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			dPos.y += 1.0f;
+		}
+		if (glm::length(dPos) > 0.1f) {
+			dPos = glm::normalize(dPos);
+			player->move(dPos);
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			break;
+		}
+
+		// mouse
+		glm::vec3 dEulers = {0.0f, 0.0f, 0.0f};
+		double mouse_x, mouse_y;
+		glfwGetCursorPos(window, &mouse_x, &mouse_y);
+		glfwSetCursorPos(window, 320.0, 240.0);
 		
 		glfwPollEvents();
 
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, quad_pos);
-		model = glm::rotate(model, (float)glfwGetTime(), {0.0f, 0.0f, 1.0f});
+		dEulers.z = -0.01f * static_cast<float>(mouse_x - 320.0);
+		dEulers.y = -0.01f * static_cast<float>(mouse_y - 240.0);
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		player->spin(dEulers);
+
+		cube->update(16.67f / 1000.0f);
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(shader);
+		glUniformMatrix4fv(
+			view_location, 1, GL_FALSE, 
+			glm::value_ptr(player->get_view_transform()));
 
-		// upload model matrix
-		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
-
-		material->use(0);
-		mask->use(1);
-		triangle->draw();
+		cube->draw(shader);
 
 		glfwSwapBuffers(window);
-
 	}
 
 	glDeleteProgram(shader);
-	delete triangle;
-	delete material;
-	delete mask;
+	delete cube;
+	delete player;
 	glfwTerminate();
 	return 0;
 }

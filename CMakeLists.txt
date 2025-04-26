@@ -19,8 +19,8 @@ add_executable(hello_window
 	src/config.cpp
 	src/main.cpp 
 	src/glad.c
-	src/triangle_mesh.cpp
-	src/material.cpp
+	src/cube.cpp
+	src/camera.cpp
 )
 
 # Add dependencies
