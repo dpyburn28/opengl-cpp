@@ -6,6 +6,7 @@ Camera::Camera(glm::vec3 position) {
 }
 
 glm::mat4 Camera::get_view_transform() {
+    
     float theta = glm::radians(eulers.z);
     float phi = glm::radians(eulers.y);
 

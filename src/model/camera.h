@@ -1,4 +1,5 @@
-#include "config.h"
+#pragma once
+#include "../config.h"
 
 class Camera {
 public:

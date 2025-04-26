@@ -8,7 +8,7 @@ cmake_policy(SET CMP0072 NEW)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(OpenGL_GL_PREFERENCE GLVND)  # Use GLVND over legacy
+# set(OpenGL_GL_PREFERENCE GLVND)  # Use GLVND over legacy
 
 # Find OpenGL
 find_package(OpenGL REQUIRED)
@@ -19,8 +19,14 @@ add_executable(hello_window
 	src/config.cpp
 	src/main.cpp 
 	src/glad.c
-	src/cube.cpp
-	src/camera.cpp
+	src/model/camera.cpp
+    src/model/cube.cpp
+    src/model/scene.cpp
+    src/view/cube_mesh.cpp
+    src/view/material.cpp
+    src/view/renderer.cpp
+    src/view/shader.cpp
+    src/controller/app.cpp
 )
 
 # Add dependencies
