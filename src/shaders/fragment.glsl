@@ -5,8 +5,8 @@ in vec2 fragmentTexCoord;
 
 out vec4 screenColor;
 
-uniform sampler2D material;  // 0
-uniform sampler2D mask;      // 1
+uniform sampler2D material;  
+uniform sampler2D mask;      
 
 void main() 
 {
