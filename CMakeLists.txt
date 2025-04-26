@@ -21,7 +21,6 @@ add_executable(hello_window
 	src/glad.c
 	src/triangle_mesh.cpp
 	src/material.cpp
-	src/linear_algebra.cpp
 )
 
 # Add dependencies

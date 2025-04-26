@@ -1,7 +1,6 @@
 #include "config.h"
 #include "triangle_mesh.h"
 #include "material.h"
-#include "linear_algebra.h"
 
 unsigned int make_shader(const std::string& vertex_filepath, const std::string& fragment_filepath);
 
@@ -56,22 +55,24 @@ int main() {
 	glUniform1i(glGetUniformLocation(shader, "material"), 0);
 	glUniform1i(glGetUniformLocation(shader, "mask"), 1);
 
-	vec3 quad_pos = {0.1f, -0.2f, 0.0f};
+	glm::vec3 quad_pos = {0.1f, -0.2f, 0.0f};
 
 	// fetch uniform locations
 	unsigned int model_location = glGetUniformLocation(shader, "model");
 	unsigned int view_location = glGetUniformLocation(shader, "view");
 	unsigned int proj_location = glGetUniformLocation(shader, "projection");
 
-	vec3 camera_pos = {-5.0f, 0.0f, 3.0f};
-	vec3 camera_target = {0.0f, 0.0f, 0.0f};
-	mat4 view = create_look_at(camera_pos, camera_target);
-	glUniformMatrix4fv(view_location, 1, GL_FALSE, view.entries);
+	glm::vec3 camera_pos = {-5.0f, 0.0f, 3.0f};
+	glm::vec3 camera_target = {0.0f, 0.0f, 0.0f};
+	glm::vec3 up = {0.0f, 0.0f, 1.0f};
 
-	mat4 projection = create_perspective_projection(
+	glm::mat4 view = glm::lookAt(camera_pos, camera_target, up);
+	glUniformMatrix4fv(view_location, 1, GL_FALSE, glm::value_ptr(view));
+
+	glm::mat4 projection = glm::perspective(
 		45.0f, 640.0f / 480.0f, 0.1f, 10.0f
 	);
-	glUniformMatrix4fv(proj_location, 1, GL_FALSE, projection.entries);
+	glUniformMatrix4fv(proj_location, 1, GL_FALSE, glm::value_ptr(projection));
 
 	// configure alpha blending
 	glEnable(GL_BLEND);
@@ -81,12 +82,15 @@ int main() {
 		
 		glfwPollEvents();
 
-		mat4 model = create_model_transform(quad_pos, 10 * glfwGetTime());
+		glm::mat4 model = glm::mat4(1.0f);
+		model = glm::translate(model, quad_pos);
+		model = glm::rotate(model, (float)glfwGetTime(), {0.0f, 0.0f, 1.0f});
+
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUseProgram(shader);
 
 		// upload model matrix
-		glUniformMatrix4fv(model_location, 1, GL_FALSE, model.entries);
+		glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model));
 
 		material->use(0);
 		mask->use(1);
