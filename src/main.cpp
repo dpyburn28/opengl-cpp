@@ -1,5 +1,7 @@
 #include "config.h"
 #include "triangle_mesh.h"
+#include "material.h"
+
 unsigned int make_shader(const std::string& vertex_filepath, const std::string& fragment_filepath);
 
 unsigned int make_module(const std::string& filepath, unsigned int module_type);
@@ -39,11 +41,22 @@ int main() {
 	glViewport(0, 0, w, h);
 
 	TriangleMesh* triangle = new TriangleMesh();
+	Material* material = new Material("../img/sketch_1.jpg");
+	Material* mask = new Material("../img/mask.jpg");
 
 	unsigned int shader = make_shader(
 		"../src/shaders/vertex.glsl", 
 		"../src/shaders/fragment.glsl"
 	);
+
+	// set texture units
+	glUseProgram(shader);
+	glUniform1i(glGetUniformLocation(shader, "material"), 0);
+	glUniform1i(glGetUniformLocation(shader, "mask"), 1);
+
+	// enable alpha blending
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	while (!glfwWindowShouldClose(window)) {
 		
@@ -51,13 +64,18 @@ int main() {
 		
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUseProgram(shader);
+		material->use(0);
+		mask->use(1);
 		triangle->draw();
+
 		glfwSwapBuffers(window);
 
 	}
 
 	glDeleteProgram(shader);
 	delete triangle;
+	delete material;
+	delete mask;
 	glfwTerminate();
 	return 0;
 }

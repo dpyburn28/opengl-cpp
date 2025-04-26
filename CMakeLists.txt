@@ -4,17 +4,19 @@ cmake_minimum_required(VERSION 3.5.0)
 # Project name, version, and languages (C and C++)
 project(hellow_window VERSION 1.0.0 LANGUAGES CXX C)
 
-set(OpenGL_GL_PREFERENCE GLVND)  # Use GLVND over legacy
+# set(OpenGL_GL_PREFERENCE GLVND)  # Use GLVND over legacy
 
 # Find OpenGL
-find_package(OpenGL 3.3 REQUIRED)
+find_package(OpenGL REQUIRED)
 
 # Add executable
 add_executable(hello_window 
 	src/config.h 
+	src/config.cpp
 	src/main.cpp 
 	src/glad.c
 	src/triangle_mesh.cpp
+	src/material.cpp
 )
 
 # Add dependencies
