@@ -19,12 +19,9 @@ add_executable(hello_window
 	src/config.cpp
 	src/main.cpp 
 	src/glad.c
-	src/model/camera.cpp
-    src/model/cube.cpp
-    src/model/scene.cpp
-    src/view/cube_mesh.cpp
-    src/view/material.cpp
-    src/view/renderer.cpp
+    src/systems/camera_system.cpp
+    src/systems/motion_system.cpp
+    src/systems/render_system.cpp
     src/view/shader.cpp
     src/controller/app.cpp
 )
