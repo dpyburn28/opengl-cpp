@@ -228,6 +228,7 @@ RenderComponent Factory::make_obj_mesh(const char* filename, glm::mat4 preTransf
     render.vertexCount = vertices.size() / 8;
     return render;
     
+    //test
     
 }
 
