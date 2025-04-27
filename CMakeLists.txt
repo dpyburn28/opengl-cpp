@@ -19,6 +19,7 @@ add_executable(hello_window
 	src/config.cpp
 	src/main.cpp 
 	src/glad.c
+	src/factories/factory.cpp
     src/systems/camera_system.cpp
     src/systems/motion_system.cpp
     src/systems/render_system.cpp

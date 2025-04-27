@@ -17,9 +17,6 @@ class App {
         App();
         ~App();
         void run();
-        unsigned int make_entity();
-        unsigned int make_cube_mesh(glm::vec3 size);
-        unsigned int make_texture(const char* filename);
         void set_up_opengl();
         void make_systems();
 
@@ -33,12 +30,7 @@ class App {
     private:
         void set_up_glfw();
 
-        unsigned int entity_count = 0;
         GLFWwindow* window;
-
-        std::vector<unsigned int> VAOs;
-        std::vector<unsigned int> VBOs;
-        std::vector<unsigned int> textures;
 
         unsigned int shader;
 

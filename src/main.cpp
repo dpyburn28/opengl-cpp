@@ -6,31 +6,21 @@
 #include "components/render_component.h"
 #include "components/transform_component.h"
 
+#include "factories/factory.h"
 
 int main() {
 
     App* app = new App();
 
-    unsigned int cubeEntity = app->make_entity();
-	TransformComponent transform;
-	transform.position = {3.0f, 0.0f, 0.25f};
-	transform.eulers = {0.0f, 0.0f, 0.0f};
-	app->transformComponents[cubeEntity] = transform;
+    Factory* factory = new Factory(
+        app->physicsComponents,
+        app->renderComponents, app->transformComponents);
 
-	PhysicsComponent physics;
-	physics.velocity = {0.0f, 0.0f, 0.0f};
-	physics.eulerVelocity = {0.0f, 0.0f, 10.0f};
-	app->physicsComponents[cubeEntity] = physics;
+	factory->make_cube(
+		{3.0f, 0.0f, 0.25f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 10.0f});
 
-	RenderComponent render;
-	render.mesh = app->make_cube_mesh({0.25f, 0.25f, 0.25f});
-	render.material = app->make_texture("../img/sketch_1.jpg");
-	app->renderComponents[cubeEntity] = render;
-
-	unsigned int cameraEntity = app->make_entity();
-	transform.position = {0.0f, 0.0f, 1.0f};
-	transform.eulers = {0.0f, 0.0f, 0.0f};
-	app->transformComponents[cameraEntity] = transform;
+	unsigned int cameraEntity = factory->make_camera(
+		{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
 
 	CameraComponent* camera = new CameraComponent();
 	app->cameraComponent = camera;
@@ -41,6 +31,7 @@ int main() {
 
 	app->run();
 
+	delete factory;
 	delete app;
 	return 0;
 }
