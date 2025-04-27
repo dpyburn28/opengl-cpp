@@ -1,4 +1,5 @@
 #include "config.h"
+#include <cstddef>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
