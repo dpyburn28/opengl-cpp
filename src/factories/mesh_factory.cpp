@@ -1,32 +1,12 @@
 #include "mesh_factory.h"
 #include "../stb_image.h"
 
-MeshFactory::~MeshFactory() {
-    for (auto& [object, VBO] : VBOs) {
-        glDeleteBuffers(1, &VBO);
-    }
-    for (auto& [object, VAO] : VAOs) {
-        glDeleteVertexArrays(1, &VAO);
-    }
-    for (auto& [object, texture] : textures) {
-        glDeleteTextures(1, &texture);
-    }
-}
+StaticMesh MeshFactory::make_cube_mesh(glm::vec3 size) {
 
-RenderComponent MeshFactory::make_cube_mesh(ObjectType objectType, glm::vec3 size) {
-    
-    RenderComponent render;
-    if (VAOs.contains(objectType)) {
-        render.VAO = VAOs[objectType];
-        render.vertexCount = vertexCounts[objectType];
-        return render;
-    } 
-    
     float l = size.x;
     float w = size.y;
     float h = size.z;
 
-    
     vertices = {
          l,  w, -h, 1.0f, 1.0f,  0.0f,  0.0f, -1.0f,
          l, -w, -h, 1.0f, 0.0f,  0.0f,  0.0f, -1.0f,
@@ -71,47 +51,38 @@ RenderComponent MeshFactory::make_cube_mesh(ObjectType objectType, glm::vec3 siz
          l,  w,  h, 1.0f, 1.0f,  0.0f,  1.0f,  0.0f
     };
 
-    vertexCounts[objectType] = 36;
-
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
-    VAOs[objectType] = VAO;
     glBindVertexArray(VAO);
 
     unsigned int VBO;
     glGenBuffers(1, &VBO);
-    VBOs[objectType] = VBO;
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    
-    // position
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), 
+        vertices.data(), GL_STATIC_DRAW);
+    //position
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 32, (void*)0);
     glEnableVertexAttribArray(0);
-
-    // texture
+    //texture coordinates
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 32, (void*)12);
     glEnableVertexAttribArray(1);
-
-    // normal
+    //normal
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 32, (void*)20);
     glEnableVertexAttribArray(2);
 
     vertices.clear();
 
-    render.VAO = VAO;
-    render.vertexCount = 36;
-
-    return render;
+    StaticMesh mesh;
+    mesh.VAO = VAO;
+    mesh.vertexCount = 36;
+    mesh.VBO = VBO;
+    return mesh;
 }
 
-RenderComponent MeshFactory::make_obj_mesh(ObjectType objectType, const char* filename, glm::mat4 preTransform) {
-    
-    RenderComponent render;
-    if (VAOs.contains(objectType)) {
-        render.VAO = VAOs[objectType];
-        render.vertexCount = vertexCounts[objectType];
-        return render;
-    }
+StaticMesh MeshFactory::make_obj_mesh(
+    const char* objFilepath, glm::mat4 preTransform) {
+
+    std::cout << "load \"" << objFilepath << "\"" << std::endl; 
 
     this->preTransform = preTransform;
 
@@ -125,22 +96,27 @@ RenderComponent MeshFactory::make_obj_mesh(ObjectType objectType, const char* fi
 
     std::ifstream file;
 
-    file.open(filename);
+    file.open(objFilepath);
     while (std::getline(file, line)) {
-        
+
         words = split(line, " ");
 
         if (!words[0].compare("v")) {
             ++vertexCount;
-        } else if (!words[0].compare("vt")) {
+        }
+
+        else if (!words[0].compare("vt")) {
             ++texcoordCount;
-        } else if (!words[0].compare("vn")) {
+        }
+
+        else if (!words[0].compare("vn")) {
             ++normalCount;
-        } else if (!words[0].compare("f")) {
+        }
+
+        else if (!words[0].compare("f")) {
             triangleCount += words.size() - 3;
         }
     }
-
     file.close();
 
     v.reserve(vertexCount);
@@ -149,7 +125,7 @@ RenderComponent MeshFactory::make_obj_mesh(ObjectType objectType, const char* fi
     //three corners per triangle, 8 floats per corner
     vertices.reserve(triangleCount * 3 * 8);
 
-    file.open(filename);
+    file.open(objFilepath);
     while (std::getline(file, line)) {
 
         words = split(line, " ");
@@ -174,12 +150,10 @@ RenderComponent MeshFactory::make_obj_mesh(ObjectType objectType, const char* fi
 
     unsigned int VAO;
     glGenVertexArrays(1, &VAO);
-    VAOs[objectType] = VAO;
     glBindVertexArray(VAO);
 
     unsigned int VBO;
     glGenBuffers(1, &VBO);
-    VBOs[objectType] = VBO;
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), 
         vertices.data(), GL_STATIC_DRAW);
@@ -193,17 +167,17 @@ RenderComponent MeshFactory::make_obj_mesh(ObjectType objectType, const char* fi
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 32, (void*)20);
     glEnableVertexAttribArray(2);
 
-    vertexCounts[objectType] = vertices.size() / 8;
-
-    render.VAO = VAO;
-    render.vertexCount = vertices.size() / 8;
+    StaticMesh mesh;
+    mesh.VAO = VAO;
+    mesh.vertexCount = vertices.size() / 8;
+    mesh.VBO = VBO;
     v.clear();
     vt.clear();
     vn.clear();
     vertices.clear();
-    return render;
-    
+    return mesh;
 }
+
 
 glm::vec3 MeshFactory::read_vec3(std::vector<std::string> words, float w) {
     return glm::vec3(
@@ -253,29 +227,27 @@ void MeshFactory::read_corner(std::string description) {
     
 }
 
-unsigned int MeshFactory::make_texture(ObjectType objectType, const char* filename) {
-     
-     if (textures.contains(objectType)) {
-        return textures[objectType];
-     }
+unsigned int MeshFactory::make_texture(const char* filename) {
 
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(filename, &width, &height, &channels, STBI_rgb_alpha);
+	unsigned char* data = stbi_load(
+        filename, &width, &height, &channels, STBI_rgb_alpha);
 
-    // make the texture
+	//make the texture
     unsigned int texture;
-    glGenTextures(1, &texture);
-    textures[objectType] = texture;
+	glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
+	
+    //load data
+    glTexImage2D(GL_TEXTURE_2D, 
+        0, GL_RGBA, width, height, 0,
+        GL_RGBA, GL_UNSIGNED_BYTE, data);
 
-    // load data
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    //free data
+	stbi_image_free(data);
 
-    // free data
-    stbi_image_free(data);
-
-    // configure sampler
+    //Configure sampler
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);

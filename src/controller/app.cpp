@@ -7,6 +7,7 @@ App::App() {
 App::~App() {
     glDeleteProgram(shader);
 
+    delete animationSystem;
     delete motionSystem;
     delete cameraSystem;
     delete renderSystem;
@@ -27,7 +28,9 @@ void App::run() {
             break;
         }
 
-        renderSystem->update(transformComponents, renderComponents);
+        animationSystem->update(animationComponents, 16.667f);
+
+        renderSystem->update(transformComponents, renderComponents, animationComponents);
     }    
 }
 
@@ -81,6 +84,7 @@ void App::set_up_opengl() {
 }
 
 void App::make_systems() {
+    animationSystem = new AnimationSystem();
     motionSystem = new MotionSystem();
     cameraSystem = new CameraSystem(shader, window);
     renderSystem = new RenderSystem(shader, window);

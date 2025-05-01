@@ -14,13 +14,16 @@ int main() {
 
     Factory* factory = new Factory(
         app->physicsComponents,
-        app->renderComponents, app->transformComponents);
+        app->renderComponents, app->transformComponents, app->animationComponents);
 
 	factory->make_cube(
 		{3.0f, 0.0f, 0.25f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 10.0f});
 
 	factory->make_girl(
-		{5.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 180.0f});
+		{5.0f, 0.0f, 0.25f}, {0.0f, 0.0f, 180.0f});
+
+	factory->make_revy(
+		{4.0f, 2.0f, 0.25f}, {0.0f, 0.0f, 270.0f});
 
 	unsigned int cameraEntity = factory->make_camera(
 		{0.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f});
@@ -34,7 +37,6 @@ int main() {
 
 	app->run();
 
-	delete factory;
 	delete app;
 	return 0;
 }

@@ -24,6 +24,7 @@ add_executable(hello_window
     src/systems/camera_system.cpp
     src/systems/motion_system.cpp
     src/systems/render_system.cpp
+    src/systems/animation_system.cpp
     src/view/shader.cpp
     src/controller/app.cpp
 )

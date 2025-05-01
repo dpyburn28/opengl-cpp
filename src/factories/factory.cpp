@@ -3,15 +3,13 @@
 Factory::Factory(
     std::unordered_map<unsigned int, PhysicsComponent>& physicsComponents,
     std::unordered_map<unsigned int, RenderComponent>& renderComponents,
-    std::unordered_map<unsigned int, TransformComponent>& transformComponents):
+    std::unordered_map<unsigned int, TransformComponent>& transformComponents,
+    std::unordered_map<unsigned int, AnimationComponent>& animationComponents):
     physicsComponents(physicsComponents),
     renderComponents(renderComponents),
-    transformComponents(transformComponents) {
-        meshFactory = new MeshFactory();
-}
+    transformComponents(transformComponents),
+    animationComponents(animationComponents) {
 
-Factory::~Factory() {
-    delete meshFactory;
 }
 
 unsigned int Factory::make_camera(glm::vec3 position, glm::vec3 eulers) {
@@ -37,10 +35,10 @@ void Factory::make_cube(glm::vec3 position, glm::vec3 eulers,
         physics.eulerVelocity = eulerVelocity;
         physicsComponents[entities_made] = physics;
 
-        RenderComponent render = meshFactory->make_cube_mesh(ObjectType::eBox, {0.25f, 0.25f, 0.25f});
-        render.material = meshFactory->make_texture(ObjectType::eBox, "../img/sketch_1.jpg");
+        RenderComponent render;
+        render.objectType = ObjectType::eBox;
+        render.animationType = AnimationType::eNone;
         renderComponents[entities_made++] = render;
-        
 }
 
 
@@ -51,14 +49,29 @@ void Factory::make_girl(glm::vec3 position, glm::vec3 eulers) {
         transform.eulers = eulers;
         transformComponents[entities_made] = transform;
 
-        glm::mat4 preTransform = glm::mat4(1.0f);
-        preTransform = glm::rotate(preTransform, 
-          glm::radians(90.0f), {1.0f, 0.0f, 0.0f});
-        preTransform = glm::rotate(preTransform, 
-          glm::radians(90.0f), {0.0f, 1.0f, 0.0f});
+        RenderComponent render;
+        render.objectType = ObjectType::eGirl;
+        render.animationType = AnimationType::eNone;
+        renderComponents[entities_made++] = render;
+        
+}
 
-        RenderComponent render = meshFactory->make_obj_mesh(ObjectType::eGirl, "../models/girl.obj", preTransform);
-        render.material = meshFactory->make_texture(ObjectType::eGirl, "../img/stargirl.png");
+void Factory::make_revy(glm::vec3 position, glm::vec3 eulers) {
+
+        TransformComponent transform;
+        transform.position = position;
+        transform.eulers = eulers;
+        transformComponents[entities_made] = transform;
+
+        AnimationComponent animation;
+        animation.frame = 0;
+        animation.speed = 0.4f;
+        animation.frameCount = 19;
+        animationComponents[entities_made] = animation;
+
+        RenderComponent render;
+        render.objectType = ObjectType::eRevy;
+        render.animationType = AnimationType::eRun;
         renderComponents[entities_made++] = render;
         
 }
